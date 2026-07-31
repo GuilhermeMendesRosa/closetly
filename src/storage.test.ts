@@ -34,4 +34,33 @@ describe('parsePersistedState', () => {
     expect(parsed.checkedItemIds).toEqual(['good-shirts'])
     expect(parsed.step).toBe(4)
   })
+
+  it('restaura uma viagem com duração e clima em meios dias', () => {
+    const parsed = parsePersistedState(
+      JSON.stringify({
+        version: 1,
+        draft: { days: 1.5, coldDays: 0.5, workouts: 0 },
+        step: 3,
+        resultSignature: null,
+        checkedItemIds: [],
+      }),
+    )
+
+    expect(parsed.draft).toEqual({ days: 1.5, coldDays: 0.5, workouts: 0 })
+    expect(parsed.step).toBe(3)
+  })
+
+  it('descarta durações fora dos intervalos de meio dia', () => {
+    expect(
+      parsePersistedState(
+        JSON.stringify({
+          version: 1,
+          draft: { days: 1.25, coldDays: 0, workouts: 0 },
+          step: 1,
+          resultSignature: null,
+          checkedItemIds: [],
+        }),
+      ),
+    ).toEqual(initialPersistedState)
+  })
 })

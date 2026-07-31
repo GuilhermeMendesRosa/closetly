@@ -22,6 +22,9 @@ const stepMeta = [
   { number: 3, short: 'Treinos', eyebrow: 'Por fim, o movimento' },
 ] as const
 
+const formatDayCount = (value: number) =>
+  value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
+
 function validResultState(state: PersistedAppState): PersistedAppState {
   const input = draftToTripInput(state.draft)
 
@@ -76,7 +79,7 @@ function App() {
         Number.isFinite(patch.days) &&
         nextDraft.coldDays > patch.days
       ) {
-        nextDraft.coldDays = Math.max(0, Math.floor(patch.days))
+        nextDraft.coldDays = Math.max(0, patch.days)
       }
 
       const nextInput = draftToTripInput(nextDraft)
@@ -104,8 +107,12 @@ function App() {
 
   const continueFlow = () => {
     if (step === 1) {
-      if (draft.days === null || !Number.isInteger(draft.days) || draft.days < 1) {
-        setError('Informe pelo menos 1 dia inteiro para continuar.')
+      if (
+        draft.days === null ||
+        !Number.isInteger(draft.days * 2) ||
+        draft.days < 1
+      ) {
+        setError('Informe pelo menos 1 dia, usando intervalos de meio dia.')
         return
       }
 
@@ -117,11 +124,13 @@ function App() {
     if (step === 2) {
       if (
         draft.days === null ||
-        !Number.isInteger(draft.coldDays) ||
+        !Number.isInteger(draft.coldDays * 2) ||
         draft.coldDays < 0 ||
         draft.coldDays > draft.days
       ) {
-        setError(`Escolha um número inteiro entre 0 e ${draft.days ?? 0}.`)
+        setError(
+          `Escolha um valor de meio em meio dia, entre 0 e ${formatDayCount(draft.days ?? 0)}.`,
+        )
         return
       }
 
@@ -265,9 +274,10 @@ function App() {
                     <NumberStepper
                       id="days"
                       label="Duração da viagem"
-                      description="Use dias inteiros, começando em 1."
+                      description="Use intervalos de meio dia, começando em 1."
                       value={draft.days}
                       min={1}
+                      step={0.5}
                       error={error ?? undefined}
                       onChange={(days) => updateDraft({ days })}
                     />
@@ -285,10 +295,11 @@ function App() {
                     <NumberStepper
                       id="cold-days"
                       label="Dias frios"
-                      description={`De 0 a ${draft.days} dias.`}
+                      description={`De 0 a ${formatDayCount(draft.days)} dias.`}
                       value={draft.coldDays}
                       min={0}
                       max={draft.days}
+                      step={0.5}
                       error={error ?? undefined}
                       onChange={(coldDays) => updateDraft({ coldDays: coldDays ?? 0 })}
                     />
@@ -296,12 +307,12 @@ function App() {
                       <div>
                         <span className="climate-summary__icon" aria-hidden="true">✦</span>
                         <span>Dias frios</span>
-                        <strong>{draft.coldDays}</strong>
+                        <strong>{formatDayCount(draft.coldDays)}</strong>
                       </div>
                       <div>
                         <span className="climate-summary__icon climate-summary__icon--sun" aria-hidden="true">☀</span>
                         <span>Dias quentes</span>
-                        <strong>{Math.max(0, draft.days - draft.coldDays)}</strong>
+                        <strong>{formatDayCount(Math.max(0, draft.days - draft.coldDays))}</strong>
                       </div>
                     </div>
                   </div>
@@ -351,8 +362,10 @@ function App() {
                     </h2>
                     {tripInput && (
                       <p>
-                        {tripInput.days} {tripInput.days === 1 ? 'dia' : 'dias'} · {tripInput.coldDays}{' '}
-                        {tripInput.coldDays === 1 ? 'frio' : 'frios'} · {tripInput.hotDays}{' '}
+                        {formatDayCount(tripInput.days)} {tripInput.days === 1 ? 'dia' : 'dias'} ·{' '}
+                        {formatDayCount(tripInput.coldDays)}{' '}
+                        {tripInput.coldDays === 1 ? 'frio' : 'frios'} ·{' '}
+                        {formatDayCount(tripInput.hotDays)}{' '}
                         {tripInput.hotDays === 1 ? 'quente' : 'quentes'} · {tripInput.workouts}{' '}
                         {tripInput.workouts === 1 ? 'treino' : 'treinos'}
                       </p>
@@ -424,7 +437,7 @@ function App() {
               <article>
                 <span>02</span>
                 <h3>Clima sob controle</h3>
-                <p>Frio pede casaco e calças; calor pede bermudas, sempre com mínimo útil.</p>
+                <p>No frio, calças e casacos acompanham cada dois dias; calor pede bermudas.</p>
               </article>
               <article>
                 <span>03</span>

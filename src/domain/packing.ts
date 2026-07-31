@@ -28,38 +28,56 @@ export interface ValidationError {
   message: string
 }
 
-const isNonNegativeInteger = (value: number) =>
-  Number.isInteger(value) && value >= 0
+const isHalfDayIncrement = (value: number) =>
+  Number.isFinite(value) && Number.isInteger(value * 2)
+
+const isNonNegativeHalfDay = (value: number) =>
+  isHalfDayIncrement(value) && value >= 0
+
+const isNonNegativeInteger = (value: number) => Number.isInteger(value) && value >= 0
+
+const calculateColdOuterwear = (coldDays: number) => {
+  const packingDays = Math.ceil(coldDays)
+  return packingDays >= 2
+    ? Math.max(Math.ceil(packingDays / 2), 2)
+    : packingDays
+}
 
 export function validateTripInput(input: TripInput): ValidationError[] {
   const errors: ValidationError[] = []
 
-  if (!Number.isInteger(input.days) || input.days < 1) {
+  if (!isHalfDayIncrement(input.days) || input.days < 1) {
     errors.push({
       field: 'days',
-      message: 'A viagem precisa ter pelo menos 1 dia inteiro.',
+      message: 'A viagem precisa ter pelo menos 1 dia, em intervalos de meio dia.',
     })
   }
 
-  const nonNegativeFields: Array<[keyof TripInput, number, string]> = [
+  const climateFields: Array<[keyof TripInput, number, string]> = [
     ['coldDays', input.coldDays, 'Os dias frios'],
     ['hotDays', input.hotDays, 'Os dias quentes'],
-    ['workouts', input.workouts, 'Os treinos'],
   ]
 
-  nonNegativeFields.forEach(([field, value, label]) => {
-    if (!isNonNegativeInteger(value)) {
+  climateFields.forEach(([field, value, label]) => {
+    if (!isNonNegativeHalfDay(value)) {
       errors.push({
         field,
-        message: `${label} devem ser informados com um número inteiro maior ou igual a zero.`,
+        message: `${label} devem ser informados em intervalos de meio dia, a partir de zero.`,
       })
     }
   })
 
+  if (!isNonNegativeInteger(input.workouts)) {
+    errors.push({
+      field: 'workouts',
+      message: 'Os treinos devem ser informados com um número inteiro maior ou igual a zero.',
+    })
+  }
+
   if (
-    Number.isInteger(input.days) &&
-    Number.isInteger(input.coldDays) &&
-    Number.isInteger(input.hotDays) &&
+    isHalfDayIncrement(input.days) &&
+    isHalfDayIncrement(input.coldDays) &&
+    isHalfDayIncrement(input.hotDays) &&
     input.coldDays + input.hotDays !== input.days
   ) {
     errors.push({
@@ -79,36 +97,37 @@ export function calculatePackingList(input: TripInput): PackingItem[] {
   }
 
   const { days, coldDays, hotDays, workouts } = input
+  const packingDays = Math.ceil(days)
   const items: PackingItem[] = [
     {
       id: 'good-shirts',
       singular: 'camiseta boa',
       plural: 'camisetas boas',
-      quantity: days,
+      quantity: packingDays,
     },
     {
       id: 'home-shirts',
       singular: 'camiseta para ficar em casa',
       plural: 'camisetas para ficar em casa',
-      quantity: days,
+      quantity: packingDays,
     },
     {
       id: 'coats',
       singular: 'casaco',
       plural: 'casacos',
-      quantity: coldDays > 0 ? 1 : 0,
+      quantity: calculateColdOuterwear(coldDays),
     },
     {
       id: 'pants',
       singular: 'calça',
       plural: 'calças',
-      quantity: coldDays > 0 ? Math.max(coldDays, 2) : 0,
+      quantity: calculateColdOuterwear(coldDays),
     },
     {
       id: 'shorts',
       singular: 'bermuda',
       plural: 'bermudas',
-      quantity: hotDays > 0 ? Math.max(hotDays, 2) : 0,
+      quantity: hotDays > 0 ? Math.max(Math.ceil(hotDays), 2) : 0,
     },
     {
       id: 'workout-sets',
@@ -126,13 +145,13 @@ export function calculatePackingList(input: TripInput): PackingItem[] {
       id: 'underwear',
       singular: 'cueca',
       plural: 'cuecas',
-      quantity: days + workouts + 1,
+      quantity: packingDays + workouts + 1,
     },
     {
       id: 'socks',
       singular: 'par de meias',
       plural: 'pares de meias',
-      quantity: days + workouts + 1,
+      quantity: packingDays + workouts + 1,
     },
   ]
 

@@ -7,6 +7,7 @@ interface NumberStepperProps {
   value: number | null
   min: number
   max?: number
+  step?: number
   error?: string
   onChange: (value: number | null) => void
 }
@@ -18,6 +19,7 @@ export function NumberStepper({
   value,
   min,
   max,
+  step = 1,
   error,
   onChange,
 }: NumberStepperProps) {
@@ -43,17 +45,17 @@ export function NumberStepper({
           type="button"
           aria-label={`Diminuir ${label.toLowerCase()}`}
           disabled={!canDecrease}
-          onClick={() => onChange(clamp((value ?? min) - 1))}
+          onClick={() => onChange(clamp((value ?? min) - step))}
         >
           <span aria-hidden="true">−</span>
         </button>
         <input
           id={id}
           type="number"
-          inputMode="numeric"
+          inputMode={step < 1 ? 'decimal' : 'numeric'}
           min={min}
           max={max}
-          step="1"
+          step={step}
           value={value ?? ''}
           aria-describedby={`${descriptionId}${error ? ` ${errorId}` : ''}`}
           aria-invalid={Boolean(error)}
@@ -66,7 +68,7 @@ export function NumberStepper({
           type="button"
           aria-label={`Aumentar ${label.toLowerCase()}`}
           disabled={!canIncrease}
-          onClick={() => onChange(clamp((value ?? min - 1) + 1))}
+          onClick={() => onChange(clamp((value ?? min - step) + step))}
         >
           <span aria-hidden="true">+</span>
         </button>

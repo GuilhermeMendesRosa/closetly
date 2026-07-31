@@ -28,7 +28,7 @@ Para simplificar as fórmulas, este documento usa as seguintes abreviações:
 
 As entradas só são válidas quando todas as condições abaixo forem atendidas:
 
-1. Todos os valores são números inteiros.
+1. `dias`, `dias_frios` e `dias_quentes` usam intervalos de meio dia; `treinos` é um número inteiro.
 2. `dias` é maior ou igual a `1`.
 3. `dias_frios`, `dias_quentes` e `treinos` são maiores ou iguais a `0`.
 4. A soma de `dias_frios` e `dias_quentes` é igual a `dias`: `F + Q = D`.
@@ -47,15 +47,15 @@ Itens cuja quantidade calculada seja `0` podem ser omitidos da checklist apresen
 
 | Item | Quantidade | Regra |
 | --- | ---: | --- |
-| Camisetas boas | `D` | Uma para cada dia da estadia. |
-| Camisetas para ficar em casa | `D` | Uma para cada dia da estadia. |
-| Casacos | `1` se `F > 0`; senão `0` | Um casaco é suficiente quando houver pelo menos um dia frio. |
-| Calças | `máximo(F, 2)` se `F > 0`; senão `0` | Em uma estadia com dias frios, levar uma por dia, respeitando o mínimo de duas. |
-| Bermudas | `máximo(Q, 2)` se `Q > 0`; senão `0` | Em uma estadia com dias quentes, levar uma por dia, respeitando o mínimo de duas. |
+| Camisetas boas | `arredondar_para_cima(D)` | Uma para cada dia ou fração da estadia. |
+| Camisetas para ficar em casa | `arredondar_para_cima(D)` | Uma para cada dia ou fração da estadia. |
+| Casacos | Aplicar a regra de casacos sobre `arredondar_para_cima(F)` | Um casaco para um dia frio; dois a partir de dois dias; depois, um para cada período de até dois dias frios. |
+| Calças | Aplicar a regra de calças sobre `arredondar_para_cima(F)` | Uma calça para um dia frio; duas a partir de dois dias; depois, uma para cada período de até dois dias frios. |
+| Bermudas | `máximo(arredondar_para_cima(Q), 2)` se `Q > 0`; senão `0` | Em uma estadia com dias quentes, levar uma por dia ou fração, respeitando o mínimo de duas. |
 | Conjuntos de academia | `T` | Um conjunto para cada treino planejado. |
 | Pares de tênis para atividade física | `1` se `T > 0`; senão `0` | Um único par quando houver pelo menos um treino. |
-| Cuecas | `D + T + 1` | Uma por dia, uma adicional por treino e uma peça de reserva. |
-| Pares de meias | `D + T + 1` | Um par por dia, um adicional por treino e um par de reserva. |
+| Cuecas | `arredondar_para_cima(D) + T + 1` | Uma por dia ou fração, uma adicional por treino e uma peça de reserva. |
+| Pares de meias | `arredondar_para_cima(D) + T + 1` | Um par por dia ou fração, um adicional por treino e um par de reserva. |
 
 Um **conjunto de academia** é tratado como um único item lógico. Nesta versão, ele não é dividido em camiseta, shorts ou outras peças.
 
@@ -74,7 +74,7 @@ Checklist:
 
 - 2 camisetas boas
 - 2 camisetas para ficar em casa
-- 1 casaco
+- 2 casacos
 - 2 calças
 - 3 cuecas
 - 3 pares de meias
@@ -112,7 +112,7 @@ Checklist:
 - 3 camisetas boas
 - 3 camisetas para ficar em casa
 - 1 casaco
-- 2 calças
+- 1 calça
 - 2 bermudas
 - 2 conjuntos de academia
 - 1 par de tênis para atividade física
@@ -127,13 +127,15 @@ Checklist:
 | Valor negativo | `D = 2`, `F = 2`, `Q = 0`, `T = -1` | Inválido, pois nenhum valor pode ser negativo. |
 | Total de climas menor que os dias | `D = 3`, `F = 1`, `Q = 1`, `T = 0` | Inválido, pois `F + Q` é diferente de `D`. |
 | Total de climas maior que os dias | `D = 2`, `F = 2`, `Q = 1`, `T = 0` | Inválido, pois `F + Q` é diferente de `D`. |
-| Valor fracionário | `D = 2`, `F = 1.5`, `Q = 0.5`, `T = 0` | Inválido, pois todos os valores devem ser inteiros. |
+| Meio dia | `D = 1.5`, `F = 0.5`, `Q = 1`, `T = 0` | Válido; as quantidades de roupas são arredondadas para cima. |
+| Fração menor que meio dia | `D = 1.25`, `F = 0.5`, `Q = 0.75`, `T = 0` | Inválido, pois a duração e o clima usam intervalos de meio dia. |
 | Mais de um treino por dia | `D = 2`, `F = 0`, `Q = 2`, `T = 3` | Válido; a checklist deve considerar os três treinos. |
 
 ## 8. Premissas e limites da primeira versão
 
-- Um dia representa qualquer dia em que será necessária uma troca normal de roupa, independentemente do número de noites da estadia.
+- A duração pode ser informada em intervalos de meio dia. Para calcular peças, toda fração é arredondada para cima.
 - O clima de cada dia é informado manualmente pelo usuário como frio ou quente.
 - Cada treino exige um conjunto de academia e uma troca adicional de cueca e meias.
-- O mínimo de duas peças é aplicado separadamente a calças e bermudas quando o clima correspondente ocorrer.
+- Calças e casacos são calculados em função dos dias frios, com uma peça para cada dois dias e períodos incompletos arredondados para cima. Para um dia frio, leva-se uma peça; a partir de dois dias frios, o mínimo é de duas peças.
+- O mínimo de duas peças continua sendo aplicado às bermudas quando houver dias quentes.
 - Pijamas, calçados comuns, itens de higiene pessoal, toalhas e acessórios não fazem parte desta versão.

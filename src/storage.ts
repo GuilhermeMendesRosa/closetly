@@ -43,6 +43,12 @@ const validItemIds = new Set<PackingItemId>([
 const isIntegerAtLeast = (value: unknown, minimum: number): value is number =>
   typeof value === 'number' && Number.isInteger(value) && value >= minimum
 
+const isHalfDayAtLeast = (value: unknown, minimum: number): value is number =>
+  typeof value === 'number' &&
+  Number.isFinite(value) &&
+  Number.isInteger(value * 2) &&
+  value >= minimum
+
 export function parsePersistedState(value: string | null): PersistedAppState {
   if (!value) return initialPersistedState
 
@@ -59,9 +65,9 @@ export function parsePersistedState(value: string | null): PersistedAppState {
       !draft ||
       !(
         draft.days === null ||
-        isIntegerAtLeast(draft.days, 1)
+        isHalfDayAtLeast(draft.days, 1)
       ) ||
-      !isIntegerAtLeast(draft.coldDays, 0) ||
+      !isHalfDayAtLeast(draft.coldDays, 0) ||
       !isIntegerAtLeast(draft.workouts, 0) ||
       (draft.days !== null && draft.coldDays > draft.days) ||
       ![1, 2, 3, 4].includes(state.step ?? 0) ||

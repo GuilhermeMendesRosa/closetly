@@ -14,7 +14,7 @@ describe('calculatePackingList', () => {
     expect(quantities({ days: 2, coldDays: 2, hotDays: 0, workouts: 0 })).toEqual({
       'good-shirts': 2,
       'home-shirts': 2,
-      coats: 1,
+      coats: 2,
       pants: 2,
       underwear: 3,
       socks: 3,
@@ -33,12 +33,23 @@ describe('calculatePackingList', () => {
     })
   })
 
+  it('aceita meio dia e arredonda as quantidades de roupas para cima', () => {
+    expect(quantities({ days: 1.5, coldDays: 1.5, hotDays: 0, workouts: 0 })).toEqual({
+      'good-shirts': 2,
+      'home-shirts': 2,
+      coats: 2,
+      pants: 2,
+      underwear: 3,
+      socks: 3,
+    })
+  })
+
   it('calcula três dias mistos e dois treinos', () => {
     expect(quantities({ days: 3, coldDays: 1, hotDays: 2, workouts: 2 })).toEqual({
       'good-shirts': 3,
       'home-shirts': 3,
       coats: 1,
-      pants: 2,
+      pants: 1,
       shorts: 2,
       'workout-sets': 2,
       'training-shoes': 1,
@@ -53,6 +64,16 @@ describe('calculatePackingList', () => {
     expect(result.underwear).toBe(6)
   })
 
+  it.each(['pants', 'coats'] as const)(
+    'leva duas peças de %s a partir de dois dias e acrescenta uma a cada dois dias frios',
+    (item) => {
+      expect(quantities({ days: 1, coldDays: 1, hotDays: 0, workouts: 0 })[item]).toBe(1)
+      expect(quantities({ days: 2, coldDays: 2, hotDays: 0, workouts: 0 })[item]).toBe(2)
+      expect(quantities({ days: 4, coldDays: 4, hotDays: 0, workouts: 0 })[item]).toBe(2)
+      expect(quantities({ days: 5, coldDays: 5, hotDays: 0, workouts: 0 })[item]).toBe(3)
+    },
+  )
+
   it('omite todos os itens cuja quantidade é zero', () => {
     const result = calculatePackingList({ days: 1, coldDays: 0, hotDays: 1, workouts: 0 })
     expect(result.every((item) => item.quantity > 0)).toBe(true)
@@ -63,7 +84,7 @@ describe('calculatePackingList', () => {
   it('usa singular e plural corretamente', () => {
     const items = calculatePackingList({ days: 1, coldDays: 1, hotDays: 0, workouts: 1 })
     expect(formatPackingItem(items.find((item) => item.id === 'coats')!)).toBe('1 casaco')
-    expect(formatPackingItem(items.find((item) => item.id === 'pants')!)).toBe('2 calças')
+    expect(formatPackingItem(items.find((item) => item.id === 'pants')!)).toBe('1 calça')
   })
 })
 
@@ -73,7 +94,7 @@ describe('validateTripInput', () => {
     [{ days: 2, coldDays: 2, hotDays: 0, workouts: -1 }, 'workouts'],
     [{ days: 3, coldDays: 1, hotDays: 1, workouts: 0 }, 'climate'],
     [{ days: 2, coldDays: 2, hotDays: 1, workouts: 0 }, 'climate'],
-    [{ days: 2, coldDays: 1.5, hotDays: 0.5, workouts: 0 }, 'coldDays'],
+    [{ days: 2, coldDays: 1.25, hotDays: 0.75, workouts: 0 }, 'coldDays'],
   ] as const)('rejeita a entrada inválida %#', (input, expectedField) => {
     expect(validateTripInput(input).some((error) => error.field === expectedField)).toBe(true)
   })
@@ -82,5 +103,9 @@ describe('validateTripInput', () => {
     expect(() =>
       calculatePackingList({ days: 0, coldDays: 0, hotDays: 0, workouts: 0 }),
     ).toThrow(RangeError)
+  })
+
+  it('aceita duração e clima em intervalos de meio dia', () => {
+    expect(validateTripInput({ days: 1.5, coldDays: 0.5, hotDays: 1, workouts: 0 })).toEqual([])
   })
 })

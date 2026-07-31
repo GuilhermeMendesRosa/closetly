@@ -24,7 +24,7 @@ describe('App', () => {
   it('bloqueia a primeira etapa sem uma duração válida', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }))
-    expect(screen.getByRole('alert')).toHaveTextContent('Informe pelo menos 1 dia inteiro')
+    expect(screen.getByRole('alert')).toHaveTextContent('Informe pelo menos 1 dia')
     expect(screen.getByRole('spinbutton', { name: 'Duração da viagem' })).toBeInTheDocument()
   })
 
@@ -37,6 +37,28 @@ describe('App', () => {
     expect(screen.getByText('2 bermudas')).toBeInTheDocument()
     expect(screen.getByText('1 conjunto de academia')).toBeInTheDocument()
     expect(screen.queryByRole('checkbox', { name: /casaco/ })).not.toBeInTheDocument()
+  })
+
+  it('aceita uma viagem de um dia e meio', () => {
+    render(<App />)
+    completeFlow({ days: 1.5, coldDays: 1.5, workouts: 0 })
+
+    expect(screen.getByText(/1,5 dias/)).toBeInTheDocument()
+    expect(screen.getByText('2 camisetas boas')).toBeInTheDocument()
+    expect(screen.getByText('2 casacos')).toBeInTheDocument()
+    expect(screen.getByText('2 calças')).toBeInTheDocument()
+  })
+
+  it('avança a duração de meio em meio dia pelos botões', () => {
+    render(<App />)
+
+    const duration = screen.getByRole('spinbutton', { name: 'Duração da viagem' })
+    const increase = screen.getByRole('button', { name: 'Aumentar duração da viagem' })
+
+    fireEvent.click(increase)
+    expect(duration).toHaveValue(1)
+    fireEvent.click(increase)
+    expect(duration).toHaveValue(1.5)
   })
 
   it('marca itens e atualiza o progresso', () => {
